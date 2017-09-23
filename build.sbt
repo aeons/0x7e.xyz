@@ -1,5 +1,4 @@
 import Versions._
-import de.heikoseeberger.sbtheader.license.Apache2_0
 
 enablePlugins(BuildInfoPlugin, SbtTwirl, JavaAppPackaging)
 
@@ -9,7 +8,11 @@ name := "web"
 
 version := "0.0.1-SNAPSHOT"
 
-scalaVersion := "2.12.1"
+organizationName := "Timo Schmid"
+startYear := Some(2016)
+licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
+
+scalaVersion := "2.12.3"
 
 http4sVersion := "0.15.3a"
 doobieVersion := "0.4.1"
@@ -100,9 +103,3 @@ dockerUpdateLatest := true
 defaultLinuxInstallLocation in Docker := "/opt/0x7e.xyz"
 
 daemonUser in Docker := "daemon"
-
-headers := Map(
-  "scala" -> Apache2_0("2016", "Timo Schmid")
-)
-
-HeaderPlugin.settingsFor(Compile, Test)
