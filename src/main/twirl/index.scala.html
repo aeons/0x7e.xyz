@@ -1,8 +1,5 @@
-@()
-
 @import xyz._0x7e.Asset
-@import xyz._0x7e.webjars.Webjar
-
+@import xyz._0x7e.BuildInfo.{jqueryVersion, mdlVersion}
 
 <!DOCTYPE html>
 <html>
@@ -10,24 +7,24 @@
         <title>0x7e.xyz</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
-        <link rel="stylesheet" type="text/css" href="@{Webjar.asset("material-design-lite", "1.3.0", "material.min.css")}">
+        <link rel="stylesheet" type="text/css" href="@{Asset.at(s"material-design-lite/$mdlVersion/material.min.css")}">
         <link rel="stylesheet" type="text/css" href="@{Asset.at("0x7e.css")}">
     </head>
     <body>
         <div class="layout-bg-code mdl-layout mdl-js-layout">
             <header class="mdl-layout__header mdl-layout__header--transparent">
                 <div class="mdl-layout__header-row">
-                        <!-- Title -->
+                    <!-- Title -->
                     <span class="mdl-layout-title">0x7e.xyz ~ make links short again</span>
-                        <!-- Add spacer, to align navigation to the right -->
+                    <!-- Add spacer, to align navigation to the right -->
                     <div class="mdl-layout-spacer"></div>
-                        <!-- Navigation -->
+                    <!-- Navigation -->
                     <nav class="mdl-navigation">
                         Tech Stack:
                         <a class="mdl-navigation__link" href="https://scala-lang.org" target="_blank">Scala</a>
                         <a class="mdl-navigation__link" href="http://http4s.org/" target="_blank">http4s</a>
-                        <a class="mdl-navigation__link" href="http://argonaut.io/" target="_blank">argonaut</a>
-                        <a class="mdl-navigation__link" href="https://github.com/tpolecat/doobie" target="_blank">doobie</a>
+                        <a class="mdl-navigation__link" href="https://circe.github.io/circe/" target="_blank">circe</a>
+                        <a class="mdl-navigation__link" href="https://tpolecat.github.io/doobie/" target="_blank">doobie</a>
                         <a class="mdl-navigation__link" href="https://getmdl.io/" target="_blank">MDL</a>
                     </nav>
                 </div>
@@ -62,7 +59,7 @@
             <button class="mdl-snackbar__action" type="button"></button>
         </div>
     </body>
-    <script type="text/javascript" src="@{Webjar.asset("material-design-lite", "1.3.0", "material.min.js")}"></script>
-    <script type="text/javascript" src="@{Webjar.asset("jquery", "3.1.1-1", "jquery.min.js")}"></script>
+    <script type="text/javascript" src="@{Asset.at(s"material-design-lite/$mdlVersion/material.min.js")}"></script>
+    <script type="text/javascript" src="@{Asset.at(s"jquery/$jqueryVersion/jquery.min.js")}"></script>
     <script type="text/javascript" src="@{Asset.at("0x7e.js")}"></script>
 </html>

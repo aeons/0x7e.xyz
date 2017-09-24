@@ -16,17 +16,22 @@
 
 package xyz._0x7e
 
-import doobie.imports._
-import doobie.util.transactor.DriverManagerTransactor
-import org.http4s.server.{Server, ServerApp}
+import cats.effect.{Effect, IO}
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import fs2._
+import org.http4s.MaybeResponse.http4sMonoidForFMaybeResponse
 import org.http4s.server.blaze.BlazeBuilder
-import xyz._0x7e.service.v1.ShortenUrl
+import org.http4s.server.staticcontent
+import org.http4s.server.staticcontent.{ResourceService, WebjarService}
+import org.http4s.util.StreamApp
 import xyz._0x7e.conf.Config
 import xyz._0x7e.db.Urls
+import xyz._0x7e.service.v1.ShortenUrl
 import xyz._0x7e.service.{ServerInfoService, WebsiteService}
-import xyz._0x7e.webjars.WebjarService
 
-import scalaz.concurrent.Task
+object WebServerApp extends WebServer[IO]
 
 /**
   * The main entry point of the application
@@ -34,10 +39,10 @@ import scalaz.concurrent.Task
   * - Creates the database tables, if they don't exist
   * - Starts the webserver
   */
-object WebServer extends ServerApp {
+class WebServer[F[_]: Effect] extends StreamApp[F] {
 
   // The database transactor
-  private val xa = DriverManagerTransactor[Task](
+  private val xa = Transactor.fromDriverManager[F](
     "org.postgresql.Driver",
     s"jdbc:postgresql://${Config.db.host}:${Config.db.port}/${Config.db.name}",
     Config.db.user,
@@ -45,16 +50,15 @@ object WebServer extends ServerApp {
   )
 
   // Routes for server info
-  private val serverInfo = new ServerInfoService(List("127.0.0.1"))
+  private val serverInfo = new ServerInfoService[F](List("127.0.0.1"))
 
   // Routes for the website
-  private val websiteRoutes = new WebsiteService(xa)
+  private val websiteRoutes = new WebsiteService[F](xa)
 
-  // Routes for Webjars
-  private val webjarRoutes = new WebjarService(Map(
-    "material-design-lite" -> BuildInfo.mdlVersion,
-    "jquery" -> BuildInfo.jqueryVersion
-  ))
+  // Routes for assets
+  val resourceService = staticcontent.resourceService[F](ResourceService.Config[F](basePath = "/assets"))
+  val webjarService = staticcontent.webjarService[F](WebjarService.Config())
+  val assets = resourceService |+| webjarService
 
   // Routes for the API
   private val apiRoutes = new ShortenUrl(
@@ -63,17 +67,15 @@ object WebServer extends ServerApp {
     xa
   )
 
-  // starts the server
-  override def server(args: List[String]): Task[Server] =
-    Urls.createSchema.transact(xa).flatMap { i =>
-      BlazeBuilder
+  def stream(args: List[String], requestShutdown: F[Unit]) =
+    Stream.eval(Urls.createSchema.transact(xa)) >>
+      BlazeBuilder[F]
         .bindHttp(Config.http.listenPort, Config.http.listenHost)
         .mountService(serverInfo.service, "/")
         .mountService(websiteRoutes.service, "/")
-        .mountService(webjarRoutes.service, "/assets/webjars")
+        .mountService(assets, "/assets")
         .mountService(apiRoutes.service, "/api/v1")
-        .start
-    }
+        .serve
 
 }
 

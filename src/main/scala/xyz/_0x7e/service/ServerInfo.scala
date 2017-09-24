@@ -16,8 +16,6 @@
 
 package xyz._0x7e.service
 
-import argonaut.Argonaut.casecodec5
-
 case class ServerInfo(
   organization: String,
   name: String,
@@ -25,15 +23,3 @@ case class ServerInfo(
   scalaVersion: String,
   sbtVersion: String
 )
-
-object ServerInfo {
-
-  implicit def ServerInfoCodec = casecodec5(ServerInfo.apply, ServerInfo.unapply)(
-    "organzation",
-    "name",
-    "version",
-    "scalaVersion",
-    "sbtVersion"
-  )
-
-}

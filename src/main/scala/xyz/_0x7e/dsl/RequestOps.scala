@@ -17,9 +17,9 @@
 package xyz._0x7e.dsl
 
 import org.http4s.Request
-import org.http4s.dsl._
+import org.http4s.syntax.string._
 
-class RequestOps(request: Request) {
+class RequestOps[F[_]](request: Request[F]) {
 
   // returns a header of a request as an Option[String]
   def header(name: String): Option[String] =

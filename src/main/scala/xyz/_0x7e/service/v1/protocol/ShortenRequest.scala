@@ -16,13 +16,4 @@
 
 package xyz._0x7e.service.v1.protocol
 
-import argonaut.Argonaut.casecodec1
-
 case class ShortenRequest(url: String)
-
-object ShortenRequest {
-
-  implicit def ShortenRequestCodec =
-    casecodec1(ShortenRequest.apply, ShortenRequest.unapply)("url")
-
-}

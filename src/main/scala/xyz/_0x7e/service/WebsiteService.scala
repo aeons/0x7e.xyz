@@ -16,25 +16,24 @@
 
 package xyz._0x7e.service
 
-import doobie.imports._
+import cats.Monad
+import cats.implicits._
+import doobie.implicits._
 import doobie.util.transactor.Transactor
+import org.http4s._
 import org.http4s.dsl._
 import org.http4s.twirl._
-import org.http4s._
-
 import xyz._0x7e.db.Urls
 import xyz._0x7e.dsl._
-
-import scalaz.concurrent.Task
 
 /**
   * Routes that display the website
   *
   * @param xa The database transactor
   */
-class WebsiteService(xa: Transactor[Task]) {
+class WebsiteService[F[_]: Monad](xa: Transactor[F]) extends Http4sDsl[F] {
 
-  val service = HttpService {
+  val service = HttpService[F] {
 
     // route for the index page
     case GET -> Root =>
@@ -44,14 +43,10 @@ class WebsiteService(xa: Transactor[Task]) {
     case request @ GET -> Root / key if isValidKey(key) =>
       routeRedirect(key, request)
 
-    // route for asset files
-    case request @ GET -> Root / "assets" / path if isAssetFile(path) =>
-      staticFile("assets/" + path, request)
-
   }
 
   // routes a redirect
-  private def routeRedirect(key: String, request: Request): Task[Response] =
+  private def routeRedirect(key: String, request: Request[F]): F[Response[F]] =
     for {
       oUrl      <- Urls.findUrlByKey(key).transact(xa)
       response  <- redirectUrl(key, oUrl, request)
@@ -59,9 +54,8 @@ class WebsiteService(xa: Transactor[Task]) {
 
 
   // redirects to an url
-  private def redirectUrl(key: String, oUrl: Option[String], request: Request): Task[Response] =
+  private def redirectUrl(key: String, oUrl: Option[String], request: Request[F]): F[Response[F]] =
     oUrl match {
-
       case Some(url) =>
         for {
           _         <- trackClick(key, request)
@@ -70,27 +64,15 @@ class WebsiteService(xa: Transactor[Task]) {
 
       case None =>
         NotFound()
-
     }
 
   // tracks a click
-  private def trackClick(key: String, request: Request): Task[Int] =
+  private def trackClick(key: String, request: Request[F]): F[Int] =
     Urls.trackClick(
       key,
       request.remoteAddr,
       request.header("User-Agent"),
       request.header("Referrer")
     ).transact(xa)
-
-  // returns whether a file is an asset file
-  private def isAssetFile(file: String): Boolean =
-    List("bg.jpg", "0x7e.css", "0x7e.js").exists(file.equals)
-
-  // serves static files from the jar
-  private def staticFile(file: String, request: Request) =
-    StaticFile
-      .fromResource("/" + file, Some(request))
-      .map(Task.now)
-      .getOrElse(NotFound())
 
 }

@@ -23,3 +23,7 @@ addSbtPlugin("de.heikoseeberger" % "sbt-header" % "3.0.2")
 //
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.2.2")
 
+//
+// tpolecat - scalac flags recommended by Rob Norris
+//
+addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.3")

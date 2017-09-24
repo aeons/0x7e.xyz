@@ -14,19 +14,24 @@ licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.
 
 scalaVersion := "2.12.3"
 
-http4sVersion := "0.15.3a"
-doobieVersion := "0.4.1"
-slf4jVersion  := "1.6.4"
+resolvers += Resolver.sonatypeRepo("snapshots")
+
+http4sVersion := "0.18.0-SNAPSHOT"
+doobieVersion := "0.5.0-M8"
+slf4jVersion  := "1.7.25"
 mdlVersion    := "1.3.0"
-jqueryVersion := "3.1.1-1"
+jqueryVersion := "3.2.1"
 
 libraryDependencies ++= Seq(
 
   // web server
   "org.http4s"    %% "http4s-blaze-server"  % http4sVersion.value,
   "org.http4s"    %% "http4s-dsl"           % http4sVersion.value,
-  "org.http4s"    %% "http4s-argonaut"      % http4sVersion.value,
+  "org.http4s"    %% "http4s-circe"         % http4sVersion.value,
   "org.http4s"    %% "http4s-twirl"         % http4sVersion.value,
+
+  // json
+  "io.circe"      %% "circe-generic"        % "0.9.0-M1",
 
   // database access
   "org.tpolecat"  %% "doobie-core"          % doobieVersion.value,
@@ -43,6 +48,8 @@ libraryDependencies ++= Seq(
   "org.webjars"   %  "jquery"               % jqueryVersion.value
 
 )
+
+TwirlKeys.templateImports := Seq()
 
 buildInfoPackage := "xyz._0x7e"
 
@@ -89,8 +96,8 @@ lazy val buildCredentials: sbt.SettingsDefinition = {
 }
 
 //
-// Docker package configuration 
-// 
+// Docker package configuration
+//
 
 packageName in Docker := "0x7e.xyz"
 

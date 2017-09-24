@@ -16,7 +16,8 @@
 
 package xyz._0x7e.db
 
-import doobie.imports._
+import doobie._
+import doobie.implicits._
 
 import scala.util.Random
 

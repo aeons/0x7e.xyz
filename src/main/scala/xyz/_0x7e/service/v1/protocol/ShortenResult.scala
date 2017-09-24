@@ -16,13 +16,4 @@
 
 package xyz._0x7e.service.v1.protocol
 
-import argonaut.Argonaut.casecodec3
-
 case class ShortenResult(full: String, short: String, qr: String)
-
-object ShortenResult {
-
-  implicit def ShortenResultCodec =
-    casecodec3(ShortenResult.apply, ShortenResult.unapply)("full", "short", "qr")
-
-}

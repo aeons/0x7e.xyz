@@ -16,15 +16,17 @@
 
 package xyz._0x7e.service
 
-import argonaut.Argonaut._
+import cats.Monad
+import io.circe.generic.auto._
+import io.circe.syntax._
 import org.http4s._
-import org.http4s.argonaut._
+import org.http4s.circe._
 import org.http4s.dsl._
 import xyz._0x7e.BuildInfo
 
-class ServerInfoService(allowedIps: List[String]) {
+class ServerInfoService[F[_]: Monad](allowedIps: List[String]) extends Http4sDsl[F] {
 
-  val service = HttpService {
+  val service = HttpService[F] {
     case request @ GET -> Root / "server-info" if request.remoteAddr.exists(ip => allowedIps.exists(ip.equals)) =>
       Ok(
         ServerInfo(

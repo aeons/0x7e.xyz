@@ -30,7 +30,7 @@ package object dsl {
     key.length == 7 && RE_KEY.findFirstIn(key).isDefined
 
   // adds extra operations to a request
-  implicit def toRequestOps(request: Request): RequestOps =
+  implicit def toRequestOps[F[_]](request: Request[F]): RequestOps[F] =
     new RequestOps(request)
 
 }

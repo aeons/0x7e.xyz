@@ -16,13 +16,4 @@
 
 package xyz._0x7e.service.v1.protocol
 
-import argonaut.Argonaut.casecodec2
-
 case class ShortenError(code: Int, message: String)
-
-object ShortenError {
-
-  implicit def ShortenErrorCodec =
-    casecodec2(ShortenError.apply, ShortenError.unapply)("code", "message")
-
-}

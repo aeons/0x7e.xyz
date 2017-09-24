@@ -16,17 +16,17 @@
 
 package xyz._0x7e.qr
 
-import com.google.zxing.common.BitMatrix
-import com.google.zxing.qrcode.QRCodeWriter
-import com.google.zxing.{BarcodeFormat, EncodeHintType}
-
 import java.awt.image.BufferedImage
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 import javax.imageio.ImageIO
 
-import scala.collection.JavaConverters.mapAsJavaMap
+import cats.effect.Sync
+import cats.implicits._
+import com.google.zxing.common.BitMatrix
+import com.google.zxing.qrcode.QRCodeWriter
+import com.google.zxing.{BarcodeFormat, EncodeHintType}
 
-import scalaz.concurrent.Task
+import scala.collection.JavaConverters.mapAsJavaMap
 
 object QRCode {
 
@@ -34,7 +34,7 @@ object QRCode {
 
   private val BLACK: Int = 0
 
-  def fromString(string: String): Task[InputStream] =
+  def fromString[F[_]: Sync](string: String): F[InputStream] =
     for {
       bitMatrix     <- encode(string, 256, 256)
       bufferedImage <- toBufferedImage(bitMatrix)
@@ -45,24 +45,27 @@ object QRCode {
     EncodeHintType.MARGIN -> 0
   )
 
-  private def encode(string: String, width: Int, height: Int): Task[BitMatrix] = Task {
-    new QRCodeWriter().encode(string, BarcodeFormat.QR_CODE, width, height, mapAsJavaMap(hints))
-  }
+  private def encode[F[_]: Sync](string: String, width: Int, height: Int): F[BitMatrix] =
+    Sync[F].delay {
+      new QRCodeWriter().encode(string, BarcodeFormat.QR_CODE, width, height, mapAsJavaMap(hints))
+    }
 
-  private def toBufferedImage(bitMatrix: BitMatrix): Task[BufferedImage] = Task {
-    val image = new BufferedImage(bitMatrix.getWidth, bitMatrix.getHeight, BufferedImage.TYPE_INT_RGB)
-    for {
-      w <- 0 until bitMatrix.getWidth
-      h <- 0 until bitMatrix.getHeight
-    } yield image.setRGB(w, h, pixel(bitMatrix.get(w, h)))
-    image
-  }
+  private def toBufferedImage[F[_]: Sync](bitMatrix: BitMatrix): F[BufferedImage] =
+    Sync[F].delay {
+      val image = new BufferedImage(bitMatrix.getWidth, bitMatrix.getHeight, BufferedImage.TYPE_INT_RGB)
+      for {
+        w <- 0 until bitMatrix.getWidth
+        h <- 0 until bitMatrix.getHeight
+      } yield image.setRGB(w, h, pixel(bitMatrix.get(w, h)))
+      image
+    }
 
-  private def toJpeg(image: BufferedImage): Task[InputStream] = Task {
-    val os = new ByteArrayOutputStream
-    ImageIO.write(image, "jpg", os)
-    new ByteArrayInputStream(os.toByteArray)
-  }
+  private def toJpeg[F[_]: Sync](image: BufferedImage): F[InputStream] =
+    Sync[F].delay {
+      val os = new ByteArrayOutputStream
+      ImageIO.write(image, "jpg", os)
+      new ByteArrayInputStream(os.toByteArray)
+    }
 
   private def pixel(on: Boolean): Int =
     if(on) BLACK else WHITE

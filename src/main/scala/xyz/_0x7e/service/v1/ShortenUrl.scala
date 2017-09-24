@@ -16,22 +16,23 @@
 
 package xyz._0x7e.service.v1
 
-import argonaut.Argonaut._
-import doobie.imports._
+import cats.effect.Sync
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import io.circe.generic.auto._
+import io.circe.syntax._
 import org.http4s._
-import org.http4s.dsl._
-import org.http4s.argonaut._
+import org.http4s.circe._
+import org.http4s.dsl.Http4sDsl
 import org.http4s.util.CaseInsensitiveString
-
-import scalaz.\/-
-import scalaz.concurrent.Task
 import xyz._0x7e.db.Urls
 import xyz._0x7e.qr.QRCode
 import xyz._0x7e.service.v1.protocol.{ShortenError, ShortenRequest, ShortenResult}
 
-class ShortenUrl(val shortHostName: String, val fullHostName: String, xa: Transactor[Task]) {
+class ShortenUrl[F[_]: Sync](val shortHostName: String, val fullHostName: String, xa: Transactor[F]) extends Http4sDsl[F] {
 
-  val service = HttpService {
+  val service = HttpService[F] {
 
     case GET -> Root /  key =>
       Urls
@@ -47,20 +48,20 @@ class ShortenUrl(val shortHostName: String, val fullHostName: String, xa: Transa
 
     case httpRequest @ POST -> Root / "shorten" =>
       for {
-        shortenRequest <- httpRequest.as(jsonOf[ShortenRequest])
+        shortenRequest <- httpRequest.decodeJson[ShortenRequest]
         response       <- validateUrl(shortenRequest.url)(shortenUri)
       } yield response
 
     case GET -> Root / "qr" / key =>
-      Ok(QRCode.fromString(full(key)))
+      Ok(QRCode.fromString[F](full(key)))
 
   }
 
-  private def validateUrl(url: String)(success: (Uri) => Task[Response]): Task[Response] =
+  private def validateUrl(url: String)(success: (Uri) => F[Response[F]]): F[Response[F]] =
     Uri.fromString(url) match {
 
-      case \/-(uri)
-        if uri.scheme.isDefined && uri.host.isDefined =>
+      case Right(uri)
+        if uri.scheme.exists(isValidScheme) && uri.host.isDefined =>
         success(uri)
 
       case _ =>
@@ -71,13 +72,13 @@ class ShortenUrl(val shortHostName: String, val fullHostName: String, xa: Transa
   private def isValidScheme(scheme: CaseInsensitiveString): Boolean =
     List("http".ci, "https".ci).contains(scheme)
 
-  private def shortenUri(uri: Uri): Task[Response] =
+  private def shortenUri(uri: Uri): F[Response[F]] =
     for {
       shortenResult <- create(uri.toString())
       response      <- Ok(shortenResult.asJson)
     } yield response
 
-  private def create(url: String): Task[ShortenResult] =
+  private def create(url: String): F[ShortenResult] =
     Urls.create(url).transact(xa).map(result)
 
   private def result(key: String): ShortenResult =
@@ -91,6 +92,5 @@ class ShortenUrl(val shortHostName: String, val fullHostName: String, xa: Transa
 
   private def qr(key: String): String =
     fullHostName + "/api/v1/qr/" + key
-
 
 }
